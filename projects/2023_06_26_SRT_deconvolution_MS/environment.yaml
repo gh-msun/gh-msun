@@ -1,0 +1,45 @@
+name: 2023_06_26_SRT_deconvolution_MS
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.7.3
+  - pip=20.0.2
+  - altair=4.1.0
+  - biopython=1.74
+  - bedtools=2.29.2
+  - bwa=0.7.17
+  - click=7.1.2
+  - flake8=3.7.9
+  - libdeflate=1.3
+  - jupyter=1.0.0
+  - jupyter_client=6.1.12
+  - jupyter_console=6.1.0
+  - jupyter_core=4.6.3
+  - jupyterlab=1.2.5
+  - jupyterlab_server=1.1.1
+  - matplotlib=3.2.1
+  - numpy=1.18.1
+  - parallel=20200322
+  - pandas=1.0.1
+  - psycopg2=2.8.6
+  - pybedtools=0.8.1
+  - pyfaidx=0.5.8
+  - samtools=1.10
+  - scipy=1.4.1
+  - seaborn=0.12.0
+  - seqtk=1.3
+  - vega=3.2.0
+  - vega_datasets=0.8.0
+  - nbstripout
+  - cutadapt
+  - setuptools>=60
+  - multiqc
+  - scikit-learn=0.24.2
+  - pip:
+    - jupyter-contrib-core
+    - jupyter_contrib_nbextensions
+    - jupyter_nbextensions_configurator
+    - pysam==0.16.0.1
+    - papermill
