@@ -1,0 +1,26 @@
+Initializing disk and swap for 4xlarge node...
+mkdir: cannot create directory ‘/temp’: File exists
+Combining /dev/nvme2n1 and /dev/nvme3n1. Mounting on /temp.
+  Physical volume "/dev/nvme2n1" successfully created.
+  Physical volume "/dev/nvme3n1" successfully created.
+  Creating devices file /etc/lvm/devices/system.devices
+  Volume group "LVMVolGroup" successfully created
+  Logical volume "ssd" created.
+meta-data=/dev/LVMVolGroup/ssd   isize=512    agcount=4, agsize=36620800 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=1, sparse=1, rmapbt=0
+         =                       reflink=1    bigtime=1 inobtcount=1
+data     =                       bsize=4096   blocks=146483200, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1
+log      =internal log           bsize=4096   blocks=71525, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+Discarding blocks...Done.
+chown: invalid user: ‘ubuntu:ubuntu’
+Initializing swap with /temp/swapfile with 800 100Mb units
+^C109+0 records in
+109+0 records out
+11429478400 bytes (11 GB, 11 GiB) copied, 6.69592 s, 1.7 GB/s
+
+
