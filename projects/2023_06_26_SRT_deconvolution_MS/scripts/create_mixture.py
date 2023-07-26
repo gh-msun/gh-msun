@@ -61,6 +61,7 @@ def generate_mixture_dir_name_string(list_celltype_name, list_proportion):
     '''
     
     # Replace '0.' with 'E', add corresponding letter from list_a, and join all elements with '_'
+    list_proportion = [round(num, 4) for num in list_proportion]
     dir_name = '_'.join(['E' + str(b)[2:] + a.upper() for a, b in zip(list_celltype_name, list_proportion)])
     return(dir_name)
 

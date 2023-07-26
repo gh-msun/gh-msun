@@ -14,27 +14,6 @@ from pyspark.sql.functions import udf, explode, broadcast, count, lit, length, c
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
 
-# # UPDATE HOME!
-# os.environ["SPARK_HOME"] = "/home/ec2-user/mambaforge/envs/2023_06_26_SRT_deconvolution_MS/lib/python3.7/site-packages/pyspark"
-# # THIS needs to be set-up before running the notebook
-# os.environ["SPARK_LOCAL_DIRS"] = "/temp"
-# os.environ["PYARROW_IGNORE_TIMEZONE"] = "1"
-
-# spark_conf = SparkConf()
-# spark_conf.set("spark.ui.showConsoleProgress", "True")
-# spark_conf.set("spark.executor.instances", "2")
-# spark_conf.set("spark.executor.cores", "2")
-# spark_conf.set("spark.executor.memory", "16g")
-# spark_conf.set("spark.driver.memory", "64g")
-# spark_conf.set("spark.driver.maxResultSize", "32g")
-# spark_conf.set("spark.parquet.filterPushdown", "true")
-# spark_conf.set("spark.local.dir", "/temp")
-# spark_conf.getAll()
-
-# sc = SparkContext(conf=spark_conf)
-# sc.setLogLevel("ERROR")
-# spark = SparkSession(sc)
-
 
 def get_file_paths(directory):
 
@@ -205,3 +184,25 @@ def score_matrix_from_mixture_directory(path_to_mixture_dir, result_path, pat_co
                              verbose=verbose)
         
     print('>>> Complete. <<< \n')
+    
+    
+# # UPDATE HOME!
+# os.environ["SPARK_HOME"] = "/home/ec2-user/mambaforge/envs/2023_06_26_SRT_deconvolution_MS/lib/python3.7/site-packages/pyspark"
+# # THIS needs to be set-up before running the notebook
+# os.environ["SPARK_LOCAL_DIRS"] = "/temp"
+# os.environ["PYARROW_IGNORE_TIMEZONE"] = "1"
+
+# spark_conf = SparkConf()
+# spark_conf.set("spark.ui.showConsoleProgress", "True")
+# spark_conf.set("spark.executor.instances", "2")
+# spark_conf.set("spark.executor.cores", "2")
+# spark_conf.set("spark.executor.memory", "16g")
+# spark_conf.set("spark.driver.memory", "64g")
+# spark_conf.set("spark.driver.maxResultSize", "32g")
+# spark_conf.set("spark.parquet.filterPushdown", "true")
+# spark_conf.set("spark.local.dir", "/temp")
+# spark_conf.getAll()
+
+# sc = SparkContext(conf=spark_conf)
+# sc.setLogLevel("ERROR")
+# spark = SparkSession(sc)
