@@ -79,7 +79,7 @@ def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_
     total_reads_per_celltype -- calculated while reading in dataframe (nrow of each df)
     cell_types -- list of cell type to mix
     total_reads_to_sample -- integer representing the total number of reads to sample across all cell types
-    proportions -- list of proportions to sample for each cell type
+    proportions -- numpy array of proportions to sample for each cell type
     seed -- seed for .sample()
     result_path -- path to output parquet file (e.g. experiment/mixture/mix_50B_50CD4/)
     itr -- mixture iteration for creating multiple mixtures (for file naming)
@@ -89,6 +89,9 @@ def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_
     '''
     
     if verbose: print(f'--> seed: {seed}')
+        
+    # convert list of proportions to numpy array
+    proportions = np.array(proportions)
     
     # compute fraction to sample for each cell type (later convert to index)
     n_reads_to_sample = proportions * total_reads_to_sample
@@ -179,7 +182,7 @@ def mix_celltypes_multiple_proportions(parquet_df, total_reads_per_celltype, n, 
     Calls mix_celltypes_n_times()  times.
     
     Arguments:
-    n -- total number of replicate mixtures to make per proportion
+    n -- total number of proportions in the titration list
     cell_types -- list of cell type to mix
     cell_type_abridged_name -- abridged name of cell types to be used for naming output directory
     total_reads_to_sample -- integer representing the total number of reads to sample across all cell types
@@ -194,10 +197,8 @@ def mix_celltypes_multiple_proportions(parquet_df, total_reads_per_celltype, n, 
         os.makedirs(result_path)
     
     seeds = one_to_many_seeds(seed, n=n)
-    i = 0
 
-    for proportion in list_of_proportions:
-
+    for i, proportion in enumerate(list_of_proportions):
         print(f"--> PROPORTION: {proportion}")
         mix_celltypes_n_times(
                      parquet_df=parquet_df,
@@ -212,7 +213,6 @@ def mix_celltypes_multiple_proportions(parquet_df, total_reads_per_celltype, n, 
                      spark=spark,
                      save=save,
                      verbose=verbose)
-        i += 1
     
     print(">>> Complete. <<< \n")
     

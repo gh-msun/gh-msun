@@ -63,3 +63,21 @@ def generate_custom_background_proportions(titration_list, custom_proportion, li
         proportions.append(proportion)
         
     return(proportions)
+
+
+def reorder_abridged_name(unordered_celltypes, ordered_celltypes, unordered_abridged_names):
+    
+    list1 = unordered_celltypes
+    list2 = unordered_abridged_names
+    list1_ordered = ordered_celltypes
+    
+    # Zip the original list1 and list2 together
+    zipped_pairs = zip(list1, list2)
+
+    # Sort the zipped pair based on list1_rearranged
+    pairs_sorted_by_list1 = sorted(zipped_pairs, key=lambda x: list1_ordered.index(x[0]))
+
+    # Unzip the pairs to get list2 rearranged
+    list1_sorted, list2_sorted = zip(*pairs_sorted_by_list1)
+
+    return(list(list2_sorted)) 
