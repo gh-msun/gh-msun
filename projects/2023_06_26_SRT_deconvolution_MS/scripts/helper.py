@@ -1,4 +1,14 @@
 import numpy as np
+import random
+
+
+def one_to_many_seeds(seed, n):
+    '''
+    Generate seeds (between 0 and 1 million)
+    '''
+    random.seed(seed)
+    seeds = [random.randint(0, 10**6) for _ in range(n)]
+    return(seeds)
 
 
 def titration_reordering(list_of_cell_types, titrating_cell_type):
