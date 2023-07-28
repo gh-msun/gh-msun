@@ -41,6 +41,9 @@ def compute_deconvolution_nnls(score_df_path, score_type, atlas, match=True):
     score_df = pd.read_csv(score_df_path, sep='\t')
     score_df.index = score_df.region_id
     
+    # subset score_df regions to atlas regions
+    score_df = score_df[score_df.region_id.isin(atlas.index)]
+    
     b = score_df[score_type]
     A = atlas
     
