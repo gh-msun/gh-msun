@@ -4,7 +4,7 @@ import random
 
 def one_to_many_seeds(seed, n):
     '''
-    Generate seeds (between 0 and 1 million)
+    Function to generate seeds (between 0 and 1 million) from one input seed.
     '''
     random.seed(seed)
     seeds = [random.randint(0, 10**6) for _ in range(n)]

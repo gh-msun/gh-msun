@@ -109,6 +109,9 @@ def compute_deconvolution_from_methyl_score_dir_nnls(path_to_methyl_score_dir, s
 
 def compute_deconvolution_naive(score_df_path, filter_cov, score_var, ref_region_df):
     
+    
+    # score_df itself should be input
+    
     # load score df
     score_df = pd.read_csv(score_df_path, sep='\t')
 
@@ -176,6 +179,73 @@ def compute_deconvolution_from_methyl_score_dir_naive(path_to_methyl_score_dir, 
 #   Functions for evaluation   #
 ################################
 
+# def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+#     dfs = []
+
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df = list_of_deconvolution_dfs[i]
+#         phat = df[df.index == cell_type].values.squeeze()
+#         p_idx = np.repeat(true_proportions[i], len(phat))
+#         df = {'idx': p_idx, 'phat': phat}
+#         df = pd.DataFrame(df)
+#         df['idx'] = df['idx'].astype(str)
+#         dfs.append(df)
+
+#     df = pd.concat(dfs)
+
+#     sns.boxplot(x='idx', y='phat', data=df)
+
+#     plt.title(f'Titration Boxplots ({deconvolution_method_name})')
+#     plt.xlabel(f'True proportion of {cell_type}')
+#     plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
+#     plt.grid(True, alpha=0.5)
+#     plt.gca().set_axisbelow(True)
+    
+#     plt.show()
+
+
+# def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+#     dfs = []
+#     plots = []
+
+#     # Get dataframe into scatter plot format
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df = list_of_deconvolution_dfs[i]
+#         phat = df[df.index == cell_type].values.squeeze()
+#         p_idx = np.repeat(true_proportions[i], len(phat))
+#         df = {'idx': p_idx, 'phat': phat}
+#         df = pd.DataFrame(df)
+#         df['idx'] = df['idx'].astype(str)
+#         dfs.append(df)
+
+#     # Calculate the grid size: square root of the number of dataframes
+#     grid_size = math.ceil(math.sqrt(len(dfs)))
+
+#     # Create a figure with a grid of subplots
+#     fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
+
+#     # Flatten the axs array for easy iterating
+#     axs = axs.ravel()
+
+#     # Create a boxplot on each subplot using your data
+#     for i, df in enumerate(dfs):
+#         sns.boxplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2)
+#         plot_name = true_proportions[i]
+#         axs[i].set_title(f"True proportion: {plot_name}")  # Set individual titles for subplots
+#         axs[i].set_xlabel(f'True proportion of {cell_type}') 
+#         axs[i].set_ylabel(f'Estimated proportion ({deconvolution_method_name})') 
+
+#     # If there are more subplots than dataframes, remove the extras
+#     if len(dfs) < len(axs):
+#         for i in range(len(dfs), len(axs)):
+#             fig.delaxes(axs[i])
+
+#     plt.tight_layout()
+#     plt.show()
+
+
 def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
     dfs = []
@@ -190,8 +260,11 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
         dfs.append(df)
 
     df = pd.concat(dfs)
+    
+    plt.figure(figsize=(12, 8))  # width and height in inches
 
-    sns.boxplot(x='idx', y='phat', data=df)
+  #   sns.boxplot(x='idx', y='phat', data=df)
+    sns.violinplot(x='idx', y='phat', data=df)
 
     plt.title(f'Titration Boxplots ({deconvolution_method_name})')
     plt.xlabel(f'True proportion of {cell_type}')
@@ -199,14 +272,16 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
     
+    plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
+    
     plt.show()
-
+    
 
 def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
     dfs = []
     plots = []
-    
+
     # Get dataframe into scatter plot format
     for i in range(0, len(list_of_deconvolution_dfs)):
         df = list_of_deconvolution_dfs[i]
@@ -228,12 +303,12 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
 
     # Create a boxplot on each subplot using your data
     for i, df in enumerate(dfs):
-        sns.boxplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2)
+        sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2)
         plot_name = true_proportions[i]
-        axs[i].set_title(f"True proportion: {plot_name}")  # Set individual titles for subplots
-        axs[i].set_xlabel(f'True proportion of {cell_type}') 
-        axs[i].set_ylabel(f'Estimated proportion ({deconvolution_method_name})') 
-        
+        axs[i].set_xlabel('') 
+        axs[i].set_ylabel('') 
+
+
     # If there are more subplots than dataframes, remove the extras
     if len(dfs) < len(axs):
         for i in range(len(dfs), len(axs)):
@@ -241,4 +316,3 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
 
     plt.tight_layout()
     plt.show()
-    

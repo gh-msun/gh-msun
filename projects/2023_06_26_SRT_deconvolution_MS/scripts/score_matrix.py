@@ -80,46 +80,10 @@ def compute_frag_scores(cpg_number_cutoff: int, schema, kmers, rates_leq, rates_
 
     return compute_frag_scores_inner
 
-
-# def score_matrix(parquet_path, result_path, pat_cols, region_df, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
-#     '''
-#     one parquet file --> one score matrix
-#     '''
-#     # Load single parquet file
-#     pat_df = spark.read.parquet(parquet_path).select(*pat_cols)
-    
-#     # Compute scores by batch
-#     region_df['batch'] = (np.arange(region_df.shape[0])/batch_size).astype(int)
-#     rv_scores = list()
-    
-#     for batch, batch_region_df in region_df.groupby('batch'):
-#         rv_ov = list()
-#         if verbose: print('--------------> Processing batch %i...' % batch)
-#         for _, row in batch_region_df.iterrows():
-#             ov_ddf = pat_df.filter(col('cpg_index_min')<=row['region_cpg_index_max_hg38'])\
-#                 .filter(col('cpg_index_max') >= row['region_cpg_index_min_hg38'])\
-#                 .withColumn('region_id', lit(row['region_id']))\
-#                 .withColumn('region_cpg_index_min', lit(row['region_cpg_index_min_hg38']))\
-#                 .withColumn('region_cpg_index_max', lit(row['region_cpg_index_max_hg38']))
-#             rv_ov.append(ov_ddf)
-#         scores_df = functools.reduce(DataFrame.union, rv_ov)\
-#             .groupby('region_id')\
-#             .applyInPandas(compute_frag_scores_udf, schema=schema)\
-#             .toPandas()
-#         rv_scores.append(scores_df)
-    
-#     scores_df = pd.concat(rv_scores)
-    
-#     if save:
-#         file_name = os.path.basename(parquet_path)
-#         file_name_without_ext = os.path.splitext(file_name)[0]
-#         save_path = result_path + '/' + file_name_without_ext + '.tsv.gz'
-#         scores_df.to_csv(save_path, sep='\t', index=False)
-        
         
 def score_matrix(parquet_path, result_path, pat_cols, region_df, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
     '''
-    one parquet file --> one score matrix
+    Function to compute fragment score from one parquet file: 1 parquet file --> 1 score matrix.
     '''
     # Load single parquet file
     pat_df = spark.read.parquet(parquet_path).select(*pat_cols)
