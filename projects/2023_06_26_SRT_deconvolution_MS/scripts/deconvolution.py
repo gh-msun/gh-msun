@@ -316,3 +316,52 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
 
     plt.tight_layout()
     plt.show()
+    
+    
+    
+
+def boxplot_background_zoom_all(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+    dfs = [] 
+
+    for i in range(0, len(list_of_deconvolution_dfs)):
+        df_ = list_of_deconvolution_dfs[i]
+        df_t = df_.transpose()
+        df_t.columns = ['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P']
+        df_melt = pd.melt(df_t, value_vars=['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P'])
+        n = df_melt.shape[0]
+        idx = np.repeat(i, n)
+        df_melt['idx'] = true_proportions[i]
+        dfs.append(df_melt)
+
+    # Calculate the grid size: square root of the number of dataframes
+    grid_size = math.ceil(math.sqrt(len(dfs)))
+
+    # Create a figure with a grid of subplots
+    fig, axs = plt.subplots(grid_size, grid_size, figsize=(12, 12))
+
+    # Flatten the axs array for easy iterating
+    axs = axs.ravel()
+    
+    # Create a boxplot on each subplot using your data
+    for i, df in enumerate(dfs):
+        sns.boxplot(data=df, x="idx", y="value", hue='variable', ax=axs[i], zorder=2)
+        plot_name = true_proportions[i]
+        axs[i].set_xlabel('') 
+        axs[i].set_ylabel('') 
+        
+        # Hide the legend
+        if i != len(axs) - 1:
+            axs[i].get_legend().remove()
+
+    # If there are more subplots than dataframes, remove the extras
+    if len(dfs) < len(axs):
+        for i in range(len(dfs), len(axs)):
+            fig.delaxes(axs[i])    
+            
+    # Set legend to the last subplot
+    handles, labels = axs[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(1.1, 1))
+
+    plt.tight_layout()
+    plt.show()

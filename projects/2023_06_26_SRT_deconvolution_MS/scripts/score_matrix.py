@@ -59,11 +59,10 @@ def compute_frag_scores(cpg_number_cutoff: int, schema, kmers, rates_leq, rates_
             for rate in rates_geq:
                 data['frac_alpha_geq_%ipct'%(100*rate)] = np.where(data['alpha']>=rate, 1, 0)
             # Expand entries that correspond to multiple molecules
-            data['number_molecules'] = data['number_molecules'].apply(lambda x: list(range(x)))
-            data = data.explode('number_molecules')
-            data['number_molecules'] = 1
-            # Aggregate metrics
-            #rv = data.groupby(['region_id', 'sample_id'])\
+         #   data['number_molecules'] = data['number_molecules'].apply(lambda x: list(range(x)))
+         #   data = data.explode('number_molecules')
+        #    data['number_molecules'] = 1
+
             rv = data.groupby(['region_id'])\
                 [['meth_k1', 'unmeth_k1', 'total_k1',
                   'meth_k3', 'unmeth_k3', 'total_k3',
