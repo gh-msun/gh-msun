@@ -102,45 +102,44 @@ def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_
     # sample reads from each cell type
     sampled_df = []
     
-    if verbose: print('--> Sample rows for each cell type...')
+    # if verbose: print('--> Sample rows for each cell type...')
+    # for i in range(0, len(cell_types)):
+    #     if verbose: print(f'----------> Sampling cell type: {cell_types[i]}')
+    #     df = parquet_df[i]
+    #     frac = sampling_fraction[i]
+    #     df_sample = df.sample(False, frac, seed)
+    #     sampled_df.append(df_sample)
+    #     n_sampled = df_sample.count()
+    #     if verbose: print(f'----------> {n_sampled}')
+    
+   # print('--> Sample rows for each cell type...')
     for i in range(0, len(cell_types)):
-        if verbose: print(f'----------> Sampling cell type: {cell_types[i]}')
+      #  print(f'----------> Sampling cell type: {cell_types[i]}')
         df = parquet_df[i]
         frac = sampling_fraction[i]
-        df_sample = df.sample(False, frac, seed)
-        sampled_df.append(df_sample)
-        n_sampled = df_sample.count()
-        if verbose: print(f'----------> {n_sampled}')
-    
-#     print('--> Sample rows for each cell type...')
-#     for i in range(0, len(cell_types)):
-#         print(f'----------> Sampling cell type: {cell_types[i]}')
-#         df = parquet_df[i]
-#         frac = sampling_fraction[i]
         
-#         n_sampled = 0
-#         if frac > 1:
-#             # repeat sampling of fraction 1
-#             n_repeat = math.floor(frac)
-#             seeds = one_to_many_seeds(seed, n_repeat+1)
+        n_sampled = 0
+        if frac > 1:
+            # repeat sampling of fraction 1
+            n_repeat = math.floor(frac)
+            seeds = one_to_many_seeds(seed, n_repeat+1)
             
-#             for j in range(0, n_repeat):
-#                 df_sample = df.sample(withReplacement=True, fraction=1.0, seed=seeds[j])
-#                 sampled_df.append(df_sample)
+            for j in range(0, n_repeat):
+                df_sample = df.sample(withReplacement=True, fraction=1.0, seed=seeds[j])
+                sampled_df.append(df_sample)
                                   
-#             # sample remaining fraction
-#             remaining_frac = frac - n_repeat
-#             df_sample = df.sample(withReplacement=True, fraction=remaining_frac, seed=seeds[n_repeat])
-#             sampled_df.append(df_sample)
-#             n_sampled += df_sample.count()
+            # sample remaining fraction
+            remaining_frac = frac - n_repeat
+            df_sample = df.sample(withReplacement=True, fraction=remaining_frac, seed=seeds[n_repeat])
+            sampled_df.append(df_sample)
+            n_sampled += df_sample.count()
         
-#         else: 
-#             df_sample = df.sample(False, frac, seed)
-#             sampled_df.append(df_sample)
-#             n_sampled = df_sample.count()
+        else: 
+            df_sample = df.sample(False, frac, seed)
+            sampled_df.append(df_sample)
+            n_sampled = df_sample.count()
         
-#         print(f'----------> {n_sampled}')
-        
+      #  print(f'----------> {n_sampled}')
         
     
     # combine reads
