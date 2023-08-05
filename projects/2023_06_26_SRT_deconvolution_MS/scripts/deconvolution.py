@@ -246,6 +246,13 @@ def compute_deconvolution_from_methyl_score_dir_naive(path_to_methyl_score_dir, 
 #     plt.show()
 
 
+
+
+########################################
+#  Plotting for titration experiments  #
+########################################
+
+
 def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
     dfs = []
@@ -318,7 +325,6 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
     plt.show()
     
     
-    
 
 def boxplot_background_zoom_all(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
@@ -365,3 +371,111 @@ def boxplot_background_zoom_all(list_of_deconvolution_dfs, cell_type, true_propo
 
     plt.tight_layout()
     plt.show()
+    
+
+def background_estimates_boxplot(list_of_deconvolution_dfs, cell_types, titration_proportions, method):
+
+    dfs = [] 
+
+    for i in range(0, len(list_of_deconvolution_dfs)):
+
+        df_ = list_of_deconvolution_dfs[i]
+        df_t = df_.transpose()
+        df_t.columns = cell_types
+        df_melt = pd.melt(df_t, value_vars=cell_types)
+
+        n = df_melt.shape[0]
+        idx = np.repeat(i, n)
+        df_melt['idx'] = idx
+
+        dfs.append(df_melt)
+
+    df_bplot = pd.concat(dfs, axis=0)
+    
+    plt.figure(figsize=(16, 12)) 
+    
+    sns.set_style("whitegrid")
+    sns.boxplot(x="idx", y="value",
+                hue="variable",
+                data=df_bplot)
+    
+    plt.xticks(range(len(titration_proportions)), titration_proportions, rotation='vertical')
+    plt.xlabel('Titration proportions')
+    plt.ylabel(f'Estimated proportions ({method})')
+    plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
+    plt.tight_layout()
+    plt.show()
+
+    
+def background_estimates_boxplot_zoom(proportion, list_of_deconvolution_dfs, cell_types, titration_proportions, method):
+    
+    proportion_idx = titration_proportions.index(proportion)
+
+    df_ = list_of_deconvolution_dfs[proportion_idx]
+    df_t = df_.transpose()
+    df_t.columns = cell_types
+    df_melt = pd.melt(df_t, value_vars=cell_types)
+
+    n = df_melt.shape[0]
+    idx = np.repeat(proportion_idx, n)
+    df_melt['idx'] = idx
+
+    plt.figure(figsize=(16, 12)) 
+    
+    sns.set_style("whitegrid")
+    sns.boxplot(x="idx", y="value",
+                hue="variable",
+                data=df_melt)
+    
+    plt.xlabel('Titration proportions')
+    plt.ylabel(f'Estimated proportions ({method})')
+    plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
+    plt.tight_layout()
+    plt.show()
+    
+    
+# def boxplot_background_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+#     dfs = [] 
+
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df_ = list_of_deconvolution_dfs[i]
+#         df_t = df_.transpose()
+#         df_t.columns = ['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P']
+#         df_melt = pd.melt(df_t, value_vars=['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P'])
+#         n = df_melt.shape[0]
+#         idx = np.repeat(i, n)
+#         df_melt['idx'] = true_proportions[i]
+#         dfs.append(df_melt)
+
+#     # Calculate the grid size: square root of the number of dataframes
+#     grid_size = math.ceil(math.sqrt(len(dfs)))
+
+#     # Create a figure with a grid of subplots
+#     fig, axs = plt.subplots(grid_size, grid_size, figsize=(15, 15))
+
+#     # Flatten the axs array for easy iterating
+#     axs = axs.ravel()
+    
+#     # Create a boxplot on each subplot using your data
+#     for i, df in enumerate(dfs):
+#         sns.boxplot(data=df, x="idx", y="value", hue='variable', ax=axs[i], zorder=2)
+#         plot_name = true_proportions[i]
+#         axs[i].set_xlabel('') 
+#         axs[i].set_ylabel('') 
+        
+#         # Hide the legend
+#         if i != len(axs) - 1:
+#             axs[i].get_legend().remove()
+
+#     # If there are more subplots than dataframes, remove the extras
+#     if len(dfs) < len(axs):
+#         for i in range(len(dfs), len(axs)):
+#             fig.delaxes(axs[i])    
+            
+#     # Set legend to the last subplot
+#     handles, labels = axs[-1].get_legend_handles_labels()
+#     fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(1.1, 1))
+
+#     plt.tight_layout()
+#     plt.show()
