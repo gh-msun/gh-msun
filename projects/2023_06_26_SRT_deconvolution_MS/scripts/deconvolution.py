@@ -218,42 +218,163 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
     plt.show()
     
 
-def boxplot_titration_log(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name, eps):
-    
-    # convert to log scale
-    deconvolution_naive_log = []
-    true_proportions = list(np.log(np.array(true_proportions)+eps))
-    for i in range(0,len(list_of_deconvolution_dfs)):
-        log_transformed = np.log(list_of_deconvolution_dfs[i]+eps)
-        deconvolution_naive_log.append(log_transformed)
-    
+def boxplot_titration_combined(list_of_deconvolution_dfs_naive, list_of_deconvolution_dfs_nnls, cell_type, true_proportions):
+
     dfs = []
-    for i in range(0, len(deconvolution_naive_log)):
-        df = deconvolution_naive_log[i]
-        phat = df[df.index == cell_type].values.squeeze()
-        p_idx = np.repeat(true_proportions[i], len(phat))
-        df = {'idx': p_idx, 'phat': phat}
+    M = len(list_of_deconvolution_dfs_naive)
+
+    for i in range(0, M):
+        df_naive = list_of_deconvolution_dfs_naive[i]
+        df_nnls = list_of_deconvolution_dfs_nnls[i]
+        
+        phat_naive = df_naive[df_naive.index == cell_type].values.squeeze()
+        phat_nnls = df_nnls[df_nnls.index == cell_type].values.squeeze()
+          
+        # get method name
+        str_naive = ['naive'] * len(phat_naive)
+        str_nnls = ['nnls'] * len(phat_nnls)
+        
+        p_idx_naive = np.repeat(true_proportions[i], len(phat_naive))
+        p_idx_nnls = np.repeat(true_proportions[i], len(phat_nnls))
+        
+        df_naive = {'idx': p_idx_naive, 'phat': phat_naive, 'method':str_naive}
+        df_nnls = {'idx': p_idx_nnls, 'phat': phat_nnls, 'method':str_nnls}
+        df_naive = pd.DataFrame(df_naive)
+        df_nnls = pd.DataFrame(df_nnls)
+        df = pd.concat([df_naive, df_nnls])
         df = pd.DataFrame(df)
         df['idx'] = df['idx'].astype(str)
         dfs.append(df)
-        
+
     df = pd.concat(dfs)
     
     plt.figure(figsize=(12, 8))  # width and height in inches
 
-  #   sns.boxplot(x='idx', y='phat', data=df)
-    sns.violinplot(x='idx', y='phat', data=df)
+    # # Draw horizontal lines
+    # for y_value in true_proportions:
+    #     plt.axhline(y=y_value, color='black', linestyle='--',linewidth=0.5)
 
-    plt.title(f'Titration Boxplots ({deconvolution_method_name})')
+    custom_palette = {'naive': 'red', 'nnls': 'blue'}
+    sns.violinplot(x='idx', y='phat', data=df, hue='method', palette=custom_palette, linewidth=0)
+    
+    # sns.stripplot(x='idx', y='phat', data=df, hue='method', dodge=True, jitter=False, size=10, edgecolor=['red', 'blue'], linewidth=1, palette=['red', 'blue'])
+    
+    # # Change the outline color
+    # for i, art in enumerate(violin_plot.patches):
+    #     # print(i, art)
+    #     # edge_color = 'red' if i == 0 else 'blue'
+    #     edge_color='red'
+    #     art.set_edgecolor(edge_color)
+
+    plt.title(f'Titration Boxplots')
     plt.xlabel(f'True proportion of {cell_type}')
-    plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
+    plt.ylabel(f'Estimated proportion')
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
     
-    true_proportions = list(np.round(np.array(true_proportions), 1))
     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
     
+
+
     plt.show()
+
+    
+    
+def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_deconvolution_dfs_nnls, cell_type, true_proportions):
+
+    dfs = []
+    plots = []
+    M = len(list_of_deconvolution_dfs_naive)
+
+    # Get dataframe into scatter plot format
+    for i in range(0, M):
+        df_naive = list_of_deconvolution_dfs_naive[i]
+        df_nnls = list_of_deconvolution_dfs_nnls[i]
+        
+        phat_naive = df_naive[df_naive.index == cell_type].values.squeeze()
+        phat_nnls = df_nnls[df_nnls.index == cell_type].values.squeeze()
+          
+        # get method name
+        str_naive = ['naive'] * len(phat_naive)
+        str_nnls = ['nnls'] * len(phat_nnls)
+        
+        p_idx_naive = np.repeat(true_proportions[i], len(phat_naive))
+        p_idx_nnls = np.repeat(true_proportions[i], len(phat_nnls))
+        
+        df_naive = {'idx': p_idx_naive, 'phat': phat_naive, 'method':str_naive}
+        df_nnls = {'idx': p_idx_nnls, 'phat': phat_nnls, 'method':str_nnls}
+        df_naive = pd.DataFrame(df_naive)
+        df_nnls = pd.DataFrame(df_nnls)
+        df = pd.concat([df_naive, df_nnls])
+        df = pd.DataFrame(df)
+        df['idx'] = df['idx'].astype(str)
+        dfs.append(df)
+        
+    # Calculate the grid size: square root of the number of dataframes
+    grid_size = math.ceil(math.sqrt(len(dfs)))
+
+    # Create a figure with a grid of subplots
+    fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
+
+    # Flatten the axs array for easy iterating
+    axs = axs.ravel()
+
+    # Create a boxplot on each subplot using your data
+    custom_palette = {'naive': 'red', 'nnls': 'blue'}
+    for i, df in enumerate(dfs):
+        sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, hue='method', palette=custom_palette)
+        
+        plot_name = true_proportions[i]
+        axs[i].set_xlabel('') 
+        axs[i].set_ylabel('') 
+        axs[i].legend().remove()
+        axs[i].axhline(y= plot_name, color='magenta', linestyle='--',linewidth=2)
+    
+
+    # If there are more subplots than dataframes, remove the extras
+    if len(dfs) < len(axs):
+        for i in range(len(dfs), len(axs)):
+            fig.delaxes(axs[i])
+
+    plt.tight_layout()
+    plt.show()
+    
+
+# def boxplot_titration_log(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name, eps):
+    
+#     # convert to log scale
+#     deconvolution_naive_log = []
+#     true_proportions = list(np.log(np.array(true_proportions)))
+#     for i in range(0,len(list_of_deconvolution_dfs)):
+#         log_transformed = np.log(list_of_deconvolution_dfs[i])
+#         deconvolution_naive_log.append(log_transformed)
+    
+#     dfs = []
+#     for i in range(0, len(deconvolution_naive_log)):
+#         df = deconvolution_naive_log[i]
+#         phat = df[df.index == cell_type].values.squeeze()
+#         p_idx = np.repeat(true_proportions[i], len(phat))
+#         df = {'idx': p_idx, 'phat': phat}
+#         df = pd.DataFrame(df)
+#         df['idx'] = df['idx'].astype(str)
+#         dfs.append(df)
+        
+#     df = pd.concat(dfs)
+    
+#     plt.figure(figsize=(12, 8))  # width and height in inches
+
+#   #   sns.boxplot(x='idx', y='phat', data=df)
+#     sns.violinplot(x='idx', y='phat', data=df)
+
+#     plt.title(f'Titration Boxplots ({deconvolution_method_name})')
+#     plt.xlabel(f'True proportion of {cell_type}')
+#     plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
+#     plt.grid(True, alpha=0.5)
+#     plt.gca().set_axisbelow(True)
+    
+#     true_proportions = list(np.round(np.array(true_proportions), 1))
+#     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
+#     plt.show()
     
 
 def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
