@@ -329,6 +329,9 @@ def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_dec
         axs[i].set_ylabel('') 
         axs[i].legend().remove()
         axs[i].axhline(y= plot_name, color='magenta', linestyle='--',linewidth=2)
+        
+        for label in axs[i].get_xticklabels():
+            label.set_fontweight('bold')
     
 
     # If there are more subplots than dataframes, remove the extras
