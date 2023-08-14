@@ -175,48 +175,11 @@ def compute_deconvolution_from_methyl_score_dir_naive(path_to_methyl_score_dir, 
     return(results)
 
 
-################################
-#   Functions for evaluation   #
-################################
-
-
-
-
 ########################################
 #  Plotting for titration experiments  #
 ########################################
 
 
-def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
-
-    dfs = []
-
-    for i in range(0, len(list_of_deconvolution_dfs)):
-        df = list_of_deconvolution_dfs[i]
-        phat = df[df.index == cell_type].values.squeeze()
-        p_idx = np.repeat(true_proportions[i], len(phat))
-        df = {'idx': p_idx, 'phat': phat}
-        df = pd.DataFrame(df)
-        df['idx'] = df['idx'].astype(str)
-        dfs.append(df)
-
-    df = pd.concat(dfs)
-    
-    plt.figure(figsize=(12, 8))  # width and height in inches
-
-  #   sns.boxplot(x='idx', y='phat', data=df)
-    sns.violinplot(x='idx', y='phat', data=df)
-
-    plt.title(f'Titration Boxplots ({deconvolution_method_name})')
-    plt.xlabel(f'True proportion of {cell_type}')
-    plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
-    plt.grid(True, alpha=0.5)
-    plt.gca().set_axisbelow(True)
-    
-    plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
-    
-    plt.show()
-    
 
 def boxplot_titration_combined(list_of_deconvolution_dfs_naive, list_of_deconvolution_dfs_nnls, cell_type, true_proportions):
 
@@ -271,14 +234,10 @@ def boxplot_titration_combined(list_of_deconvolution_dfs_naive, list_of_deconvol
     plt.ylabel(f'Estimated proportion')
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
-    
     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
-    
-
 
     plt.show()
 
-    
     
 def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_deconvolution_dfs_nnls, cell_type, true_proportions):
 
@@ -342,6 +301,9 @@ def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_dec
     plt.tight_layout()
     plt.show()
     
+    
+    
+
 
 # def boxplot_titration_log(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name, eps):
     
@@ -378,155 +340,186 @@ def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_dec
 #     true_proportions = list(np.round(np.array(true_proportions), 1))
 #     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
 #     plt.show()
+
+
+# def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+#     dfs = []
+
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df = list_of_deconvolution_dfs[i]
+#         phat = df[df.index == cell_type].values.squeeze()
+#         p_idx = np.repeat(true_proportions[i], len(phat))
+#         df = {'idx': p_idx, 'phat': phat}
+#         df = pd.DataFrame(df)
+#         df['idx'] = df['idx'].astype(str)
+#         dfs.append(df)
+
+#     df = pd.concat(dfs)
     
+#     plt.figure(figsize=(12, 8))  # width and height in inches
 
-def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+#   #   sns.boxplot(x='idx', y='phat', data=df)
+#     sns.violinplot(x='idx', y='phat', data=df)
 
-    dfs = []
-    plots = []
-
-    # Get dataframe into scatter plot format
-    for i in range(0, len(list_of_deconvolution_dfs)):
-        df = list_of_deconvolution_dfs[i]
-        phat = df[df.index == cell_type].values.squeeze()
-        p_idx = np.repeat(true_proportions[i], len(phat))
-        df = {'idx': p_idx, 'phat': phat}
-        df = pd.DataFrame(df)
-        df['idx'] = df['idx'].astype(str)
-        dfs.append(df)
-
-    # Calculate the grid size: square root of the number of dataframes
-    grid_size = math.ceil(math.sqrt(len(dfs)))
-
-    # Create a figure with a grid of subplots
-    fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
-
-    # Flatten the axs array for easy iterating
-    axs = axs.ravel()
-
-    # Create a boxplot on each subplot using your data
-    for i, df in enumerate(dfs):
-        sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2)
-        plot_name = true_proportions[i]
-        axs[i].set_xlabel('') 
-        axs[i].set_ylabel('') 
-
-
-    # If there are more subplots than dataframes, remove the extras
-    if len(dfs) < len(axs):
-        for i in range(len(dfs), len(axs)):
-            fig.delaxes(axs[i])
-
-    plt.tight_layout()
-    plt.show()
+#     plt.title(f'Titration Boxplots ({deconvolution_method_name})')
+#     plt.xlabel(f'True proportion of {cell_type}')
+#     plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
+#     plt.grid(True, alpha=0.5)
+#     plt.gca().set_axisbelow(True)
+    
+#     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
+    
+#     plt.show()
     
     
 
-def boxplot_background_zoom_all(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+# def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
-    dfs = [] 
+#     dfs = []
+#     plots = []
 
-    for i in range(0, len(list_of_deconvolution_dfs)):
-        df_ = list_of_deconvolution_dfs[i]
-        df_t = df_.transpose()
-        df_t.columns = ['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P']
-        df_melt = pd.melt(df_t, value_vars=['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P'])
-        n = df_melt.shape[0]
-        idx = np.repeat(i, n)
-        df_melt['idx'] = true_proportions[i]
-        dfs.append(df_melt)
+#     # Get dataframe into scatter plot format
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df = list_of_deconvolution_dfs[i]
+#         phat = df[df.index == cell_type].values.squeeze()
+#         p_idx = np.repeat(true_proportions[i], len(phat))
+#         df = {'idx': p_idx, 'phat': phat}
+#         df = pd.DataFrame(df)
+#         df['idx'] = df['idx'].astype(str)
+#         dfs.append(df)
 
-    # Calculate the grid size: square root of the number of dataframes
-    grid_size = math.ceil(math.sqrt(len(dfs)))
+#     # Calculate the grid size: square root of the number of dataframes
+#     grid_size = math.ceil(math.sqrt(len(dfs)))
 
-    # Create a figure with a grid of subplots
-    fig, axs = plt.subplots(grid_size, grid_size, figsize=(12, 12))
+#     # Create a figure with a grid of subplots
+#     fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
 
-    # Flatten the axs array for easy iterating
-    axs = axs.ravel()
+#     # Flatten the axs array for easy iterating
+#     axs = axs.ravel()
+
+#     # Create a boxplot on each subplot using your data
+#     for i, df in enumerate(dfs):
+#         sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2)
+#         plot_name = true_proportions[i]
+#         axs[i].set_xlabel('') 
+#         axs[i].set_ylabel('') 
+
+
+#     # If there are more subplots than dataframes, remove the extras
+#     if len(dfs) < len(axs):
+#         for i in range(len(dfs), len(axs)):
+#             fig.delaxes(axs[i])
+
+#     plt.tight_layout()
+#     plt.show()
     
-    # Create a boxplot on each subplot using your data
-    for i, df in enumerate(dfs):
-        sns.boxplot(data=df, x="idx", y="value", hue='variable', ax=axs[i], zorder=2)
-        plot_name = true_proportions[i]
-        axs[i].set_xlabel('') 
-        axs[i].set_ylabel('') 
+    
+# def boxplot_background_zoom_all(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+#     dfs = [] 
+
+#     for i in range(0, len(list_of_deconvolution_dfs)):
+#         df_ = list_of_deconvolution_dfs[i]
+#         df_t = df_.transpose()
+#         df_t.columns = ['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P']
+#         df_melt = pd.melt(df_t, value_vars=['B', 'CD4', 'CD8', 'NK', 'Mono', 'Eosi', 'Neutro', 'Eryth', 'Mega', 'Eryth-P'])
+#         n = df_melt.shape[0]
+#         idx = np.repeat(i, n)
+#         df_melt['idx'] = true_proportions[i]
+#         dfs.append(df_melt)
+
+#     # Calculate the grid size: square root of the number of dataframes
+#     grid_size = math.ceil(math.sqrt(len(dfs)))
+
+#     # Create a figure with a grid of subplots
+#     fig, axs = plt.subplots(grid_size, grid_size, figsize=(12, 12))
+
+#     # Flatten the axs array for easy iterating
+#     axs = axs.ravel()
+    
+#     # Create a boxplot on each subplot using your data
+#     for i, df in enumerate(dfs):
+#         sns.boxplot(data=df, x="idx", y="value", hue='variable', ax=axs[i], zorder=2)
+#         plot_name = true_proportions[i]
+#         axs[i].set_xlabel('') 
+#         axs[i].set_ylabel('') 
         
-        # Hide the legend
-        if i != len(axs) - 1:
-            axs[i].get_legend().remove()
+#         # Hide the legend
+#         if i != len(axs) - 1:
+#             axs[i].get_legend().remove()
 
-    # If there are more subplots than dataframes, remove the extras
-    if len(dfs) < len(axs):
-        for i in range(len(dfs), len(axs)):
-            fig.delaxes(axs[i])    
+#     # If there are more subplots than dataframes, remove the extras
+#     if len(dfs) < len(axs):
+#         for i in range(len(dfs), len(axs)):
+#             fig.delaxes(axs[i])    
             
-    # Set legend to the last subplot
-    handles, labels = axs[-1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(1.1, 1))
+#     # Set legend to the last subplot
+#     handles, labels = axs[-1].get_legend_handles_labels()
+#     fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(1.1, 1))
 
-    plt.tight_layout()
-    plt.show()
+#     plt.tight_layout()
+#     plt.show()
     
 
-def background_estimates_boxplot(list_of_deconvolution_dfs, cell_types, titration_proportions, method):
+# def background_estimates_boxplot(list_of_deconvolution_dfs, cell_types, titration_proportions, method):
 
-    dfs = [] 
+#     dfs = [] 
 
-    for i in range(0, len(list_of_deconvolution_dfs)):
+#     for i in range(0, len(list_of_deconvolution_dfs)):
 
-        df_ = list_of_deconvolution_dfs[i]
-        df_t = df_.transpose()
-        df_t.columns = cell_types
-        df_melt = pd.melt(df_t, value_vars=cell_types)
+#         df_ = list_of_deconvolution_dfs[i]
+#         df_t = df_.transpose()
+#         df_t.columns = cell_types
+#         df_melt = pd.melt(df_t, value_vars=cell_types)
 
-        n = df_melt.shape[0]
-        idx = np.repeat(i, n)
-        df_melt['idx'] = idx
+#         n = df_melt.shape[0]
+#         idx = np.repeat(i, n)
+#         df_melt['idx'] = idx
 
-        dfs.append(df_melt)
+#         dfs.append(df_melt)
 
-    df_bplot = pd.concat(dfs, axis=0)
+#     df_bplot = pd.concat(dfs, axis=0)
     
-    plt.figure(figsize=(16, 12)) 
+#     plt.figure(figsize=(16, 12)) 
     
-    sns.set_style("whitegrid")
-    sns.boxplot(x="idx", y="value",
-                hue="variable",
-                data=df_bplot)
+#     sns.set_style("whitegrid")
+#     sns.boxplot(x="idx", y="value",
+#                 hue="variable",
+#                 data=df_bplot)
     
-    plt.xticks(range(len(titration_proportions)), titration_proportions, rotation='vertical')
-    plt.xlabel('Titration proportions')
-    plt.ylabel(f'Estimated proportions ({method})')
-    plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
-    plt.tight_layout()
-    plt.show()
+#     plt.xticks(range(len(titration_proportions)), titration_proportions, rotation='vertical')
+#     plt.xlabel('Titration proportions')
+#     plt.ylabel(f'Estimated proportions ({method})')
+#     plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
+#     plt.tight_layout()
+#     plt.show()
 
     
-def background_estimates_boxplot_zoom(proportion, list_of_deconvolution_dfs, cell_types, titration_proportions, method):
+# def background_estimates_boxplot_zoom(proportion, list_of_deconvolution_dfs, cell_types, titration_proportions, method):
     
-    proportion_idx = titration_proportions.index(proportion)
+#     proportion_idx = titration_proportions.index(proportion)
 
-    df_ = list_of_deconvolution_dfs[proportion_idx]
-    df_t = df_.transpose()
-    df_t.columns = cell_types
-    df_melt = pd.melt(df_t, value_vars=cell_types)
+#     df_ = list_of_deconvolution_dfs[proportion_idx]
+#     df_t = df_.transpose()
+#     df_t.columns = cell_types
+#     df_melt = pd.melt(df_t, value_vars=cell_types)
 
-    n = df_melt.shape[0]
-    idx = np.repeat(proportion_idx, n)
-    df_melt['idx'] = idx
+#     n = df_melt.shape[0]
+#     idx = np.repeat(proportion_idx, n)
+#     df_melt['idx'] = idx
 
-    plt.figure(figsize=(16, 12)) 
+#     plt.figure(figsize=(16, 12)) 
     
-    sns.set_style("whitegrid")
-    sns.boxplot(x="idx", y="value",
-                hue="variable",
-                data=df_melt)
+#     sns.set_style("whitegrid")
+#     sns.boxplot(x="idx", y="value",
+#                 hue="variable",
+#                 data=df_melt)
     
-    plt.xlabel('Titration proportions')
-    plt.ylabel(f'Estimated proportions ({method})')
-    plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
-    plt.tight_layout()
-    plt.show()
+#     plt.xlabel('Titration proportions')
+#     plt.ylabel(f'Estimated proportions ({method})')
+#     plt.legend(bbox_to_anchor=(0.5,-0.2), loc="upper center", borderaxespad=0, ncol=5)
+#     plt.tight_layout()
+#     plt.show()
     
     
