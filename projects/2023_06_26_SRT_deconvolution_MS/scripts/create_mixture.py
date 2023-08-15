@@ -120,6 +120,9 @@ def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_
         
         n_sampled = 0
         if frac > 1:
+            
+            print('sampling with replacement!!')
+            
             # repeat sampling of fraction 1
             n_repeat = math.floor(frac)
             seeds = one_to_many_seeds(seed, n_repeat+1)
