@@ -321,8 +321,15 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
     
     plt.figure(figsize=(12, 6))  # width and height in inches
 
-  #   sns.boxplot(x='idx', y='phat', data=df)
-    sns.violinplot(x='idx', y='phat', data=df, linewidth=0, color='blue')
+    sns.boxplot(x='idx', y='phat', data=df, color='dodgerblue')
+    
+    # add ground truth dash
+    df_true = {'idx': true_proportions, 'y': true_proportions}
+    df_true = pd.DataFrame(df_true)
+    df_true['idx'] = df_true['idx'].astype(str)
+    plt.scatter(x='idx', y='y', data=df_true, color='magenta', marker='_', s=150)
+    
+   # sns.violinplot(x='idx', y='phat', data=df, linewidth=0, color='blue')
 
     plt.title(f'Titration Boxplots ({deconvolution_method_name})')
     plt.xlabel(f'True proportion of {cell_type}')
@@ -362,7 +369,8 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
 
     # Create a boxplot on each subplot using your data
     for i, df in enumerate(dfs):
-        sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, color='dodgerblue')
+        sns.boxplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, color='dodgerblue')
+        #sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, color='dodgerblue')
         plot_name = true_proportions[i]
         axs[i].set_xlabel('') 
         axs[i].set_ylabel('')

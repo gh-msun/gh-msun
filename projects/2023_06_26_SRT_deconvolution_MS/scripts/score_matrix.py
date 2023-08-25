@@ -80,7 +80,7 @@ def compute_frag_scores(cpg_number_cutoff: int, schema, kmers, rates_leq, rates_
     return compute_frag_scores_inner
 
         
-def score_matrix(parquet_path, result_path, pat_cols, region_df, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
+def score_matrix(parquet_path, result_path, pat_cols, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
     '''
     Function to compute fragment score from one parquet file: 1 parquet file --> 1 score matrix.
     '''
@@ -99,7 +99,7 @@ def score_matrix(parquet_path, result_path, pat_cols, region_df, batch_size, sch
         scores_df.to_csv(save_path, sep='\t', index=False)
 
 
-def score_matrix_n_times(mix_dir_path, result_path, pat_cols, region_df, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
+def score_matrix_n_times(mix_dir_path, result_path, pat_cols, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
     '''
     mixture directory of replicate mixture parquets --> score matrix per replicate mixture parquet
     '''
@@ -119,8 +119,7 @@ def score_matrix_n_times(mix_dir_path, result_path, pat_cols, region_df, batch_s
             
         score_matrix(parquet_path=path,
                     result_path=result_path,
-                    pat_cols=pat_cols, 
-                    region_df=region_df, 
+                    pat_cols=pat_cols,  
                     batch_size=batch_size, 
                     schema=schema, 
                     spark=spark,
@@ -130,7 +129,7 @@ def score_matrix_n_times(mix_dir_path, result_path, pat_cols, region_df, batch_s
     print('\n')
 
 
-def score_matrix_from_mixture_directory(path_to_mixture_dir, result_path, pat_cols, region_df, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
+def score_matrix_from_mixture_directory(path_to_mixture_dir, result_path, pat_cols, batch_size, schema, spark, compute_frag_scores_udf, save=False, verbose=False):
     '''
     dir_path_to_experiment
     '''
@@ -157,7 +156,6 @@ def score_matrix_from_mixture_directory(path_to_mixture_dir, result_path, pat_co
         score_matrix_n_times(mix_dir_path=path, 
                              result_path=save_path,
                              pat_cols=pat_cols, 
-                             region_df=region_df, 
                              batch_size=batch_size, 
                              schema=schema, 
                              spark=spark,

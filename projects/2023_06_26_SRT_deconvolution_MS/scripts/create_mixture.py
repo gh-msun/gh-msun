@@ -138,6 +138,8 @@ def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_
             n_sampled += df_sample.count()
         
         else: 
+            
+            # print('sampling w/o replacement')
             df_sample = df.sample(False, frac, seed)
             sampled_df.append(df_sample)
             n_sampled = df_sample.count()
