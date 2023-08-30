@@ -10,6 +10,7 @@ import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
 import nbformat
+import cvxpy as cp
 
 from scipy.optimize import nnls
 
@@ -23,6 +24,10 @@ def get_file_paths(directory):
 
     return(list_paths)
 
+
+######################################
+#              NNLS                  #
+######################################
 
 def compute_deconvolution_nnls(score_df_path, score_type, atlas, match=True):
     '''
@@ -107,6 +112,10 @@ def compute_deconvolution_from_methyl_score_dir_nnls(path_to_methyl_score_dir, s
     return(results)
 
 
+######################################
+#              Naive                 #
+######################################
+
 def compute_deconvolution_naive(score_df_path, filter_cov, score_var, ref_region_df):
     
     
@@ -175,11 +184,224 @@ def compute_deconvolution_from_methyl_score_dir_naive(path_to_methyl_score_dir, 
     return(results)
 
 
+###################################################
+#              Huber (force zero                  #
+###################################################
+
+def compute_deconvolution_huber(score_df_path, score_type, atlas, epsilon, match=True, force_zero=False):
+    '''
+    Run nonnegative least squares ||Ax-b||_2. 
+    The solution x is the deconvolution of b.
+    
+    Reasoning for match=True:
+    Note that for lower total read count for a mixture, there be regions that
+    are missing in score_df. At 1M reads, this not a problem.
+    
+    score_df -- methylation score dataframe
+    score_type -- hypo or hyper score: e.g. 'frac_alpha_leq_25pct'
+    atlas -- atlas dataframe
+    '''
+    # load score df
+    score_df = pd.read_csv(score_df_path, sep='\t')
+    score_df.index = score_df.region_id
+    
+    # subset score_df regions to atlas regions
+    score_df = score_df[score_df.region_id.isin(atlas.index)]
+    
+    b = score_df[score_type]
+    A = atlas
+    
+    # match index between A and b
+    if match:
+        region_count_before = A.shape[0]
+        A = A[A.index.isin(b.index)]
+        region_count_after = A.shape[0]
+        region_count_diff = region_count_before - region_count_after 
+        print(f'Dropped: {region_count_diff} regions.')
+    
+    # sort the indices for A to match b indices
+    A_sorted = A.loc[b.index, :]
+    
+    # alpha = 0 no regularization
+    huber = HuberRegressor(alpha=0.0, 
+                           epsilon=epsilon, 
+                           fit_intercept = False)
+    huber.fit(A_sorted, b)
+    
+    # run huber
+    x = pd.Series(huber.coef_, index=A_sorted.columns) 
+    
+    # if force_zero is set to True then set negative to 0
+    if force_zero:
+        x[x < 0] = 0
+    
+    return(x)
+
+
+def compute_deconvolution_n_times_huber(mixture_replicates_path, score_type, atlas, epsilon, match=True, force_zero=False):
+    '''
+    
+    mixture_replicates_path -- path to a mixture (proportion) directory of replicates (e.g. ../E1B_E18CD4_E18CD8_E18NK_E18MONO_E18NEUTRO/)
+    output: pandas df
+    
+    '''
+    # given path to mixture grab all paths to mixture replicates
+    list_mixture_dir_paths = get_file_paths(mixture_replicates_path)
+    
+    # run deconvolution for each replicate
+    results = []
+    samples_name = []
+    for path in list_mixture_dir_paths:
+        deconv = compute_deconvolution_huber(score_df_path=path, 
+                                           atlas=atlas, 
+                                           score_type=score_type, 
+                                           match=match,
+                                           force_zero=force_zero)
+        results.append(deconv)
+    df = pd.concat(results, axis=1)
+    
+    return df 
+
+
+def compute_deconvolution_from_methyl_score_dir_huber(path_to_methyl_score_dir, score_type, atlas, epsilon, match=True, force_zero=False):
+    '''
+    '''
+    # grab all file paths in methyl_score directory
+    list_methyl_score_dir = get_file_paths(path_to_methyl_score_dir)
+    
+    # run deconvolution on each mixture proportion
+    results = []
+    for path in list_methyl_score_dir:
+        df = compute_deconvolution_n_times_huber(mixture_replicates_path=path, 
+                                               score_type=score_type, 
+                                               atlas=atlas, 
+                                               epsilon=epsilon,
+                                               match=match,
+                                               force_zero=force_zero)
+        results.append(df)
+    
+    return(results)
+
+
+###################################################
+#              Huber (nonzero constraint          #
+###################################################
+
+def compute_deconvolution_nnhuber(score_df_path, score_type, atlas, epsilon, match=True):
+    '''
+    Run nonnegative least squares ||Ax-b||_2. 
+    The solution x is the deconvolution of b.
+    
+    Reasoning for match=True:
+    Note that for lower total read count for a mixture, there be regions that
+    are missing in score_df. At 1M reads, this not a problem.
+    
+    score_df -- methylation score dataframe
+    score_type -- hypo or hyper score: e.g. 'frac_alpha_leq_25pct'
+    atlas -- atlas dataframe
+    '''
+    def nnHuber(A, b, delta):
+        
+        n = A.shape[1]
+        x = cp.Variable(n)
+
+        loss = A @ x - b
+        huber_loss = cp.sum(cp.huber(loss, delta))
+
+        # Objective
+        objective = cp.Minimize(huber_loss)
+
+        # Nonnegativity constraints
+        constraints = [x >= 0]
+
+        # Problem
+        prob = cp.Problem(objective, constraints)
+
+        # Solve
+        prob.solve()
+
+        return(x.value)
+    
+    
+    # load score df
+    score_df = pd.read_csv(score_df_path, sep='\t')
+    score_df.index = score_df.region_id
+    
+    # subset score_df regions to atlas regions
+    score_df = score_df[score_df.region_id.isin(atlas.index)]
+    
+    b = score_df[score_type]
+    A = atlas
+    
+    # match index between A and b
+    if match:
+        region_count_before = A.shape[0]
+        A = A[A.index.isin(b.index)]
+        region_count_after = A.shape[0]
+        region_count_diff = region_count_before - region_count_after 
+        print(f'Dropped: {region_count_diff} regions.')
+    
+    # sort the indices for A to match b indices
+    A_sorted = A.loc[b.index, :]
+    
+    # run huber
+    x = nnHuber(A_sorted.to_numpy(), b, delta=epsilon)
+    x = pd.Series(x, index=A_sorted.columns)
+    
+    # extremely small, less than -10^10, just round to 0
+    threshold = 10 ** -10
+    abs(x) < threshold
+    x[abs(x) < threshold] = 0
+    
+    return(x)
+
+
+def compute_deconvolution_n_times_nnhuber(mixture_replicates_path, score_type, atlas, epsilon, match=True):
+    '''
+    
+    mixture_replicates_path -- path to a mixture (proportion) directory of replicates (e.g. ../E1B_E18CD4_E18CD8_E18NK_E18MONO_E18NEUTRO/)
+    output: pandas df
+    
+    '''
+    # given path to mixture grab all paths to mixture replicates
+    list_mixture_dir_paths = get_file_paths(mixture_replicates_path)
+    
+    # run deconvolution for each replicate
+    results = []
+    samples_name = []
+    for path in list_mixture_dir_paths:
+        deconv = compute_deconvolution_nnhuber(score_df_path=path, 
+                                           atlas=atlas, 
+                                           score_type=score_type, 
+                                           match=match)
+        results.append(deconv)
+    df = pd.concat(results, axis=1)
+    
+    return df 
+
+
+def compute_deconvolution_from_methyl_score_dir_nnhuber(path_to_methyl_score_dir, score_type, atlas, epsilon, match=True):
+    '''
+    '''
+    # grab all file paths in methyl_score directory
+    list_methyl_score_dir = get_file_paths(path_to_methyl_score_dir)
+    
+    # run deconvolution on each mixture proportion
+    results = []
+    for path in list_methyl_score_dir:
+        df = compute_deconvolution_n_times_nnhuber(mixture_replicates_path=path, 
+                                               score_type=score_type, 
+                                               atlas=atlas, 
+                                               epsilon=epsilon,
+                                               match=match)
+        results.append(df)
+    
+    return(results)
+
+
 ########################################
 #  Plotting for titration experiments  #
 ########################################
-
-
 
 def boxplot_titration_combined(list_of_deconvolution_dfs_naive, list_of_deconvolution_dfs_nnls, cell_type, true_proportions):
 
@@ -301,8 +523,6 @@ def boxplot_titration_zoom_combined(list_of_deconvolution_dfs_naive, list_of_dec
     plt.tight_layout()
     plt.show()
     
-    
-    
 
 def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
@@ -340,7 +560,6 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
     plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
     
     plt.show()
-    
     
 
 def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
