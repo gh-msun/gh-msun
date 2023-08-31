@@ -11,6 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import nbformat
 import cvxpy as cp
+from sklearn.linear_model import HuberRegressor
 
 from scipy.optimize import nnls
 
@@ -58,7 +59,7 @@ def compute_deconvolution_nnls(score_df_path, score_type, atlas, match=True):
         A = A[A.index.isin(b.index)]
         region_count_after = A.shape[0]
         region_count_diff = region_count_before - region_count_after 
-        print(f'Dropped: {region_count_diff} regions.')
+     #   print(f'Dropped: {region_count_diff} regions.')
     
     # sort the indices for A to match b indices
     A_sorted = A.loc[b.index, :]
@@ -217,7 +218,7 @@ def compute_deconvolution_huber(score_df_path, score_type, atlas, epsilon, match
         A = A[A.index.isin(b.index)]
         region_count_after = A.shape[0]
         region_count_diff = region_count_before - region_count_after 
-        print(f'Dropped: {region_count_diff} regions.')
+       # print(f'Dropped: {region_count_diff} regions.')
     
     # sort the indices for A to match b indices
     A_sorted = A.loc[b.index, :]
@@ -256,6 +257,7 @@ def compute_deconvolution_n_times_huber(mixture_replicates_path, score_type, atl
                                            atlas=atlas, 
                                            score_type=score_type, 
                                            match=match,
+                                           epsilon=epsilon,
                                            force_zero=force_zero)
         results.append(deconv)
     df = pd.concat(results, axis=1)
@@ -339,7 +341,7 @@ def compute_deconvolution_nnhuber(score_df_path, score_type, atlas, epsilon, mat
         A = A[A.index.isin(b.index)]
         region_count_after = A.shape[0]
         region_count_diff = region_count_before - region_count_after 
-        print(f'Dropped: {region_count_diff} regions.')
+       # print(f'Dropped: {region_count_diff} regions.')
     
     # sort the indices for A to match b indices
     A_sorted = A.loc[b.index, :]
@@ -373,6 +375,7 @@ def compute_deconvolution_n_times_nnhuber(mixture_replicates_path, score_type, a
         deconv = compute_deconvolution_nnhuber(score_df_path=path, 
                                            atlas=atlas, 
                                            score_type=score_type, 
+                                           epsilon=epsilon,
                                            match=match)
         results.append(deconv)
     df = pd.concat(results, axis=1)
@@ -606,6 +609,174 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
 
     plt.tight_layout()
     plt.show()
+    
+    
+###################
+#   LOD 95 Plot   #
+###################
+
+def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, detection_threshold, lod=0.95):
+    # celltype atlas, deconvolution_predictions list(s), titration list, titrating cell type proportions, decision threshold
+    # celltype atlas, deconvolution list(s), titration list, titrating cell type proportions, +/- tolerance
+    # support 1 vs all
+    # titrating_celltypes = ['immune_t_effector', 'immune_treg']
+    # titrating_celltype_proportion = TITRATION_LIST
+    # deconvolution_preds = deconvolution_nnls
+    # detection_threshold =  0.005
+    # lod = 0.95
+
+    data = []
+    lod95_value = []
+
+    # <- start loop
+    for i, celltype in enumerate(titrating_celltypes):
+        
+        # celltype_idx = titrating_celltypes.index(celltype)
+        preds_for_celltype = deconvolution_preds[i]
+
+        p_detect = []
+
+        for df in preds_for_celltype:
+            m, n = df.shape
+            phat = df[df.index == celltype]
+            phat_boolean = phat > detection_threshold
+            p_detected = sum(phat_boolean.values.squeeze()) / n
+            p_detect.append(p_detected)
+
+        ###### ----- plotting
+
+        # Replace these with your data
+        x_values = titrating_celltype_proportion
+        y_values = p_detect 
+
+        data.append((x_values, y_values))
+
+        # Sorting the x_values and y_values in the order of x_values
+        sorted_indices = np.argsort(x_values)
+        x_values_sorted = np.array(x_values)[sorted_indices]
+        y_values_sorted = np.array(y_values)[sorted_indices]
+
+        if x_values_sorted[0] == 0:
+            y_values_sorted[0] = 0
+
+        # Interpolating to find the x-value
+        y_target = lod
+        x_target = np.interp(y_target, y_values_sorted, x_values_sorted)
+        lod95_value.append(x_target)
+
+
+    for i, (x_values, y_values) in enumerate(data):
+        name = names[i]
+        lod95 = round(lod95_value[i], 5)
+        label = f'{name}: {lod95}'
+        if x_values[-1] == 0:
+            y_values[-1] = 0
+        sns.scatterplot(x=x_values, y=y_values, label=label)
+        sns.lineplot(x=x_values, y=y_values)
+
+    # Set the limits and spacing of the x and y axes
+    # plt.xticks(ticks=[i/10 for i in range(11)])
+    # plt.yticks(ticks=[i/10 for i in range(11)])
+    plt.xlim(0, 0.1)
+    plt.ylim(0, 1)
+
+    plt.axhline(y=y_target, xmin=0, xmax=x_target+1, color='blue', linestyle='--', linewidth=0.8)
+
+    plt.grid(True, alpha=0.5)
+    plt.gca().set_axisbelow(True)
+
+    plt.xlabel('Cell Type Proportion')
+    plt.ylabel('% Correctly Identified (x/20)')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.show()
+    
+    
+def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, tolerance=0.3, lod=0.95):
+    # celltype atlas, deconvolution_predictions list(s), titration list, titrating cell type proportions, decision threshold
+    # celltype atlas, deconvolution list(s), titration list, titrating cell type proportions, +/- tolerance
+    # support 1 vs all
+    # titrating_celltypes = ['immune_t_effector', 'immune_treg']
+    # titrating_celltype_proportion = TITRATION_LIST
+    # deconvolution_preds = deconvolution_nnls
+    # detection_threshold =  0.005
+    # lod = 0.95
+
+    data = []
+    lod95_value = []
+
+    # <- start loop
+    for i, celltype in enumerate(titrating_celltypes):
+        
+      #  celltype_idx = titrating_celltypes.index(celltype)
+        preds_for_celltype = deconvolution_preds[i]
+
+        p_correct = []
+
+        for i in range(0,len(preds_for_celltype)):
+            df = preds_for_celltype[i]
+            m, n = df.shape
+            eps = titrating_celltype_proportion[i] * tolerance
+            true_p = titrating_celltype_proportion[i]
+            true_p_min = true_p - eps 
+            true_p_max = true_p + eps
+            phat = df[df.index == celltype]
+            phat = phat.values.squeeze()
+            phat_boolean = [(true_p_min <= x <= true_p_max) for x in phat]
+            p_correct.append(sum(phat_boolean) / n)
+
+        ###### ----- plotting
+
+        # Replace these with your data
+        x_values = titrating_celltype_proportion
+        y_values = p_correct
+
+        data.append((x_values, y_values))
+
+        # Sorting the x_values and y_values in the order of x_values
+        sorted_indices = np.argsort(x_values)
+        x_values_sorted = np.array(x_values)[sorted_indices]
+        y_values_sorted = np.array(y_values)[sorted_indices]
+
+        if x_values_sorted[0] == 0:
+            y_values_sorted[0] = 0
+
+        # Interpolating to find the x-value
+        y_target = lod
+        x_target = np.interp(y_target, y_values_sorted, x_values_sorted)
+        lod95_value.append(x_target)
+        
+        print(x_target)
+
+
+    for i, (x_values, y_values) in enumerate(data):
+        name = names[i]
+        lod95 = round(lod95_value[i], 5)
+        label = f'{name}: {lod95}'
+        if x_values[-1] == 0:
+            y_values[-1] = 0
+        sns.scatterplot(x=x_values, y=y_values, label=label)
+        sns.lineplot(x=x_values, y=y_values)
+
+    # Set the limits and spacing of the x and y axes
+    # plt.xticks(ticks=[i/10 for i in range(11)])
+    # plt.yticks(ticks=[i/10 for i in range(11)])
+    plt.xlim(0, 0.1)
+    plt.ylim(0, 1)
+
+    plt.axhline(y=y_target, xmin=0, xmax=x_target+1, color='blue', linestyle='--', linewidth=0.8)
+
+    plt.grid(True, alpha=0.5)
+    plt.gca().set_axisbelow(True)
+
+    plt.xlabel('Cell Type Proportion')
+    plt.ylabel('% Correctly Identified (x/20)')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.show()
+    
+
+    
     
     
 # def boxplot_titration_log(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name, eps):
