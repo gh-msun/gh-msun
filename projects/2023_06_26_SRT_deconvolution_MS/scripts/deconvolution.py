@@ -185,9 +185,9 @@ def compute_deconvolution_from_methyl_score_dir_naive(path_to_methyl_score_dir, 
     return(results)
 
 
-###################################################
-#              Huber (force zero                  #
-###################################################
+####################################################
+#              Huber (force zero)                  #
+####################################################
 
 def compute_deconvolution_huber(score_df_path, score_type, atlas, epsilon, match=True, force_zero=False):
     '''
@@ -285,9 +285,9 @@ def compute_deconvolution_from_methyl_score_dir_huber(path_to_methyl_score_dir, 
     return(results)
 
 
-###################################################
-#              Huber (nonzero constraint          #
-###################################################
+####################################################
+#              Huber (nonzero constraint)          #
+####################################################
 
 def compute_deconvolution_nnhuber(score_df_path, score_type, atlas, epsilon, match=True):
     '''
@@ -633,6 +633,9 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
         
         # celltype_idx = titrating_celltypes.index(celltype)
         preds_for_celltype = deconvolution_preds[i]
+        
+        print(i)
+        print(celltype)
 
         p_detect = []
 
@@ -685,7 +688,7 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
 
-    plt.xlabel('Cell Type Proportion')
+    plt.xlabel('Titration Proportion')
     plt.ylabel('% Correctly Identified (x/20)')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
@@ -745,9 +748,6 @@ def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_
         y_target = lod
         x_target = np.interp(y_target, y_values_sorted, x_values_sorted)
         lod95_value.append(x_target)
-        
-        print(x_target)
-
 
     for i, (x_values, y_values) in enumerate(data):
         name = names[i]
@@ -769,7 +769,7 @@ def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
 
-    plt.xlabel('Cell Type Proportion')
+    plt.xlabel('Titration Proportion')
     plt.ylabel('% Correctly Identified (x/20)')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
