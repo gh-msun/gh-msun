@@ -560,12 +560,142 @@ def boxplot_titration(list_of_deconvolution_dfs, cell_type, true_proportions, de
     plt.grid(True, alpha=0.5)
     plt.gca().set_axisbelow(True)
     
-    plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
+    # x axis perctange
+  #  percent_ticks = ["{:.0f}%".format(x * 100) if 0.01 <= x <= 1 else "{:.1f}%".format(x * 100) for x in true_proportions]
+    percent_ticks  = [
+    "{:.1f}%".format(tick * 100) if 0.01 <= tick < 0.2 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick < 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in true_proportions]
+    plt.xticks(ticks=range(len(percent_ticks)), labels=percent_ticks, rotation='vertical')
+    
+    # y axis percentage
+    ticks = plt.yticks()[0]
+   # formatted_ticks = ["{:.0f}%".format(tick * 100) if 0.01 <= tick < 1 else "{:.1f}%".format(tick * 100) for tick in ticks]
+    formatted_ticks  = [
+    "{:.1f}%".format(tick * 100) if 0.01 <= tick < 0.2 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick < 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in ticks
+    ]
+    plt.yticks(ticks=ticks, labels=formatted_ticks)
+    plt.ylim(bottom=0)
     
     plt.show()
     
 
 def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+    dfs = []
+    plots = []
+    
+# true_proportions_percent = ["{:.0f}%".format(x * 100) if 0.01 <= x <= 1 else "{:.1f}%".format(x * 100) for x in true_proportions]
+    true_proportions_percent  = [
+    "{:.1f}%".format(tick * 100) if 0.01 <= tick < 0.2 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick < 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in true_proportions]
+
+
+    # Get dataframe into scatter plot format
+    for i in range(0, len(list_of_deconvolution_dfs)):
+        df = list_of_deconvolution_dfs[i]
+        phat = df[df.index == cell_type].values.squeeze()
+        p_idx = np.repeat(true_proportions[i], len(phat))
+        df = {'idx': p_idx, 'phat': phat}
+        df = pd.DataFrame(df)
+        df['idx'] = df['idx'].astype(str)
+        dfs.append(df)
+
+    # Calculate the grid size: square root of the number of dataframes
+    grid_size = math.ceil(math.sqrt(len(dfs)))
+
+    # Create a figure with a grid of subplots
+    fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
+
+    # Flatten the axs array for easy iterating
+    axs = axs.ravel()
+
+    # Create a boxplot on each subplot using your data
+    for i, df in enumerate(dfs):
+        sns.boxplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, color='dodgerblue')
+        #sns.violinplot(data=df, x="idx", y="phat", ax=axs[i], zorder=2, color='dodgerblue')
+        plot_name = true_proportions[i]
+        axs[i].set_xlabel('') 
+        axs[i].set_ylabel('')
+        axs[i].axhline(y= plot_name, color='magenta', linestyle='-',linewidth=2)
+        
+        # y tick
+        ticks = axs[i].get_yticks()
+     #   formatted_ticks = ["{:.1f}%".format(tick * 100) if 0.01 <= tick < 1 else "{:.1f}%".format(tick * 100) for tick in ticks]  
+        formatted_ticks  = [
+        "{:.1f}%".format(tick * 100) if 0.01 <= tick < 0.2 else
+        ("{:.1f}%".format(tick * 100) if 0.001 <= tick < 0.01 else
+         "{:.2f}%".format(tick * 100))
+            for tick in true_proportions]
+        axs[i].set_yticks(ticks)
+        axs[i].set_yticklabels(formatted_ticks)
+        
+        has_negative = any(val < 0 for val in ticks)
+        if has_negative:
+            axs[i].set_ylim(bottom=0)
+        
+        # x tick
+        ticks = axs[i].get_xticks()
+        axs[i].set_xticks(ticks)
+        axs[i].set_xticklabels([true_proportions_percent[i]])
+        
+        for label in axs[i].get_xticklabels():
+            label.set_color('magenta')
+
+    # If there are more subplots than dataframes, remove the extras
+    if len(dfs) < len(axs):
+        for i in range(len(dfs), len(axs)):
+            fig.delaxes(axs[i])
+
+    plt.tight_layout()
+    plt.show()
+    
+    
+def boxplot_titration_decimal(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
+
+    dfs = []
+
+    for i in range(0, len(list_of_deconvolution_dfs)):
+        df = list_of_deconvolution_dfs[i]
+        phat = df[df.index == cell_type].values.squeeze()
+        p_idx = np.repeat(true_proportions[i], len(phat))
+        df = {'idx': p_idx, 'phat': phat}
+        df = pd.DataFrame(df)
+        df['idx'] = df['idx'].astype(str)
+        dfs.append(df)
+
+    df = pd.concat(dfs)
+    
+    plt.figure(figsize=(12, 6))  # width and height in inches
+
+    sns.boxplot(x='idx', y='phat', data=df, color='dodgerblue')
+    
+    # add ground truth dash
+    df_true = {'idx': true_proportions, 'y': true_proportions}
+    df_true = pd.DataFrame(df_true)
+    df_true['idx'] = df_true['idx'].astype(str)
+    plt.scatter(x='idx', y='y', data=df_true, color='magenta', marker='_', s=150)
+    
+   # sns.violinplot(x='idx', y='phat', data=df, linewidth=0, color='blue')
+
+    plt.title(f'Titration Boxplots ({deconvolution_method_name})')
+    plt.xlabel(f'True proportion of {cell_type}')
+    plt.ylabel(f'Estimated proportion ({deconvolution_method_name})')
+    plt.grid(True, alpha=0.5)
+    plt.gca().set_axisbelow(True)
+    
+    plt.xticks(range(len(true_proportions)), true_proportions, rotation='vertical')
+    
+    plt.show()
+    
+
+def boxplot_titration_zoom_decimal(list_of_deconvolution_dfs, cell_type, true_proportions, deconvolution_method_name):
 
     dfs = []
     plots = []
@@ -611,11 +741,12 @@ def boxplot_titration_zoom(list_of_deconvolution_dfs, cell_type, true_proportion
     plt.show()
     
     
+    
 ###################
 #   LOD 95 Plot   #
 ###################
 
-def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, detection_threshold, lod=0.95):
+def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, detection_threshold, xlim, lod=0.95):
     # celltype atlas, deconvolution_predictions list(s), titration list, titrating cell type proportions, decision threshold
     # celltype atlas, deconvolution list(s), titration list, titrating cell type proportions, +/- tolerance
     # support 1 vs all
@@ -633,9 +764,6 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
         
         # celltype_idx = titrating_celltypes.index(celltype)
         preds_for_celltype = deconvolution_preds[i]
-        
-        print(i)
-        print(celltype)
 
         p_detect = []
 
@@ -671,7 +799,8 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
     for i, (x_values, y_values) in enumerate(data):
         name = names[i]
         lod95 = round(lod95_value[i], 5)
-        label = f'{name}: {lod95}'
+        lod95_percent = round(lod95 * 100,3)
+        label = f'{name}: {lod95_percent}%'
         if x_values[-1] == 0:
             y_values[-1] = 0
         sns.scatterplot(x=x_values, y=y_values, label=label)
@@ -680,7 +809,7 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
     # Set the limits and spacing of the x and y axes
     # plt.xticks(ticks=[i/10 for i in range(11)])
     # plt.yticks(ticks=[i/10 for i in range(11)])
-    plt.xlim(0, 0.1)
+    plt.xlim(0, xlim)
     plt.ylim(0, 1)
 
     plt.axhline(y=y_target, xmin=0, xmax=x_target+1, color='blue', linestyle='--', linewidth=0.8)
@@ -689,13 +818,33 @@ def lod95_detect_plot(names, titrating_celltypes, titrating_celltype_proportion,
     plt.gca().set_axisbelow(True)
 
     plt.xlabel('Titration Proportion')
-    plt.ylabel('% Correctly Identified (x/20)')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.ylabel('% Correctly Identified')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', title='LoD95')
+    
+    current_ticks = list(plt.xticks()[0])
+    current_ticks.reverse()
+    new_labels = percent_ticks  = [
+    "{:.0f}%".format(tick * 100) if 0.01 <= tick <= 0.2 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick <= 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in current_ticks]
+    plt.xticks(current_ticks, new_labels)
+  
+    
+    # y axis percentage
+    ticks = plt.yticks()[0]
+    formatted_ticks  = [
+    "{:.0f}%".format(tick * 100) if 0.01 <= tick <= 1 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick <= 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in ticks]
+    plt.yticks(ticks=ticks, labels=formatted_ticks)
+    plt.ylim(bottom=0)
 
     plt.show()
     
     
-def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, tolerance=0.3, lod=0.95):
+def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_proportion, deconvolution_preds, xlim, tolerance=0.3, lod=0.95):
     # celltype atlas, deconvolution_predictions list(s), titration list, titrating cell type proportions, decision threshold
     # celltype atlas, deconvolution list(s), titration list, titrating cell type proportions, +/- tolerance
     # support 1 vs all
@@ -752,7 +901,8 @@ def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_
     for i, (x_values, y_values) in enumerate(data):
         name = names[i]
         lod95 = round(lod95_value[i], 5)
-        label = f'{name}: {lod95}'
+        lod95_percent = round(lod95 * 100,3)
+        label = f'{name}: {lod95_percent}%'
         if x_values[-1] == 0:
             y_values[-1] = 0
         sns.scatterplot(x=x_values, y=y_values, label=label)
@@ -761,7 +911,7 @@ def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_
     # Set the limits and spacing of the x and y axes
     # plt.xticks(ticks=[i/10 for i in range(11)])
     # plt.yticks(ticks=[i/10 for i in range(11)])
-    plt.xlim(0, 0.1)
+    plt.xlim(0, xlim)
     plt.ylim(0, 1)
 
     plt.axhline(y=y_target, xmin=0, xmax=x_target+1, color='blue', linestyle='--', linewidth=0.8)
@@ -770,10 +920,34 @@ def lod95_within_proportion_plot(names, titrating_celltypes, titrating_celltype_
     plt.gca().set_axisbelow(True)
 
     plt.xlabel('Titration Proportion')
-    plt.ylabel('% Correctly Identified (x/20)')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.ylabel('% Correctly Identified')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', title='LoD95')
+    
+    
+    current_ticks = list(plt.xticks()[0])
+    current_ticks.reverse()
+    new_labels = percent_ticks  = [
+    "{:.0f}%".format(tick * 100) if 0.01 <= tick <= 0.2 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick <= 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in current_ticks]
+    
+    plt.xticks(current_ticks, new_labels)
+    
+    # y axis percentage
+    ticks = plt.yticks()[0]
+    formatted_ticks  = [
+    "{:.0f}%".format(tick * 100) if 0.01 <= tick <= 1 else
+    ("{:.1f}%".format(tick * 100) if 0.001 <= tick <= 0.01 else
+     "{:.2f}%".format(tick * 100))
+        for tick in ticks
+    ]
+    plt.yticks(ticks=ticks, labels=formatted_ticks)
+    plt.ylim(bottom=0)
 
     plt.show()
+    
+
     
 
     
