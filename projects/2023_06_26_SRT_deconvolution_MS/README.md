@@ -16,3 +16,6 @@ The environment for this project is described in `environment.yaml` and can be
 installed by conda manually or automatically with `make develop`, which will
 install conda if necessary, then install the environment as well as setup
 jupyter extensions.
+
+## Confluence
+https://guardanthealth.atlassian.net/wiki/spaces/LUN/pages/3221553168/Cell+type+deconvolution+mixture+analysis
