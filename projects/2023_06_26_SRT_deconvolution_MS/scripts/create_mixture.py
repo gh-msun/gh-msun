@@ -67,10 +67,6 @@ def generate_mixture_dir_name_string(list_celltype_name, list_proportion):
     return(dir_name)
 
 
-def reverse_translate(input_string):
-    pass
-
-
 def mix_celltypes(parquet_df, total_reads_per_celltype, cell_types, total_reads_to_sample, proportions, seed, result_path, spark, verbose, save=False, itr=None):
     ''' Mix reads from different cell types based on given proportion and total reads to sample.
     Note: Data is loaded once in mix_celltypes_n_times() to avoid loading dataframes repeatedly.

@@ -18,7 +18,7 @@ S3_DATA_DIR := s3://gh-bi-lunar/analysis/
 S3_RESOURCES := s3://gh-bi-lunar/shared/deconvolution/
 LOCAL_DATA_DIR := /analysis/gh-msun/ojects/2023_06_26_SRT_deconvolution_MS/
 
-notebook-remote: develop
+notebook-remote: # develop
 	$(WITH_ENV) && jupyter lab --no-browser --port=$(PORT) --ip=$(HOST_IP)
 
 notebook-local: develop
@@ -37,8 +37,8 @@ env-exist: get-conda
 env: environment.yaml
 	$(MAMBA_BIN) env create -f $(ENV_FILE)
 
-develop: env-exist
-	$(WITH_ENV) && jupyter contrib nbextension install --user && jupyter nbextensions_configurator enable --user
+# develop: env-exist
+# 	$(WITH_ENV) && jupyter contrib nbextension install --user && jupyter nbextensions_configurator enable --user
 
 s3-up:
 	aws s3 sync $(LOCAL_DATA_DIR) $(S3_DATA_DIR)
